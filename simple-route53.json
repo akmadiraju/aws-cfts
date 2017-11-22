@@ -1,0 +1,48 @@
+ {
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "<Describe the CFT ",
+    "Mappings": {
+        "params":{
+            "Source01":{
+                "DNSName":"ELB-DNS-NAME .",
+                "HostedZoneID":"HostedZoneID of ELB"
+            },
+            "Target":{
+                "DNSName": "Route53 Desired DNS name"
+            },
+            "DomainList": {
+                "publicDomain": "Domain Name ." 
+            }
+        }
+    },
+    "Resources" : {
+        // Change if DNS is private
+        "myPublicDNS": {
+            "Type" : "AWS::Route53::RecordSetGroup",
+            "Properties": {
+                "HostedZoneName":{ "Fn::FindInMap": ["params", "DomainList", "publicDomain"]},
+                "Comment": "Route53 - alias target to ELB LoadBalancers",
+            
+                    "Name" : {"Fn::Join": [".",[
+                        {"Fn::FindInMap": ["params", "Target", "DNSName"]},
+                        {"Fn::FindInMap":["params", "DomainList", "publicDomain"]}
+                    ]]},
+                    "Type" : "A",
+                    "AliasTarget": {
+                        "HostedZoneId": { "Fn::FindInMap": ["params", "Source01", "HostedZoneId"]},
+                        "DNSName" : {"Fn::FindInMap": ["params", "Source01", "DNSName"]},
+                        "EvaluateTargetHealth": true
+                    }
+                }
+            },
+        "Outputs" :{
+            "TargetHostName" : {
+                "Description" : "Target HostName",
+                "Value" : { "Fn::Join":[ ".", [
+                                            {"Fn::FindInMap": ["params", "Target", "DNSName"]},
+                                            {"Fn::FindInMap": ["params", "DomainList", "publicDomain"]}
+                ]]}
+            }
+        }
+    }
+}
